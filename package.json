@@ -1,0 +1,37 @@
+{
+  "name": "Node-Weight-Tracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --watch src -e ejs,js src/index.js",
+    "initdb": "node tools/initdb.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AleksandraKaminska/Node-Weight-Tracker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AleksandraKaminska/Node-Weight-Tracker/issues"
+  },
+  "homepage": "https://github.com/AleksandraKaminska/Node-Weight-Tracker#readme",
+  "dependencies": {
+    "@hapi/bell": "12",
+    "@hapi/boom": "9",
+    "@hapi/cookie": "11",
+    "@hapi/hapi": "19",
+    "@hapi/inert": "6",
+    "@hapi/joi": "17",
+    "@hapi/vision": "6",
+    "dotenv": "8",
+    "ejs": "3",
+    "postgres": "1"
+  },
+  "devDependencies": {
+    "nodemon": "2"
+  }
+}
