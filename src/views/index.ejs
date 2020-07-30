@@ -1,0 +1,13 @@
+<h1 class="title">Weight Tracker</h1>
+<br>
+<h2 class="subtitle">Welcome to the <b>Weight Tracker</b> sample project!</h2>
+<h3 class="subtitle">
+  <% if ( auth.isAnonymous ) { %>
+    <p><a href="/login">Click here</a> to login or create an account.</p>
+  <% } %>
+
+  <% if ( auth.isAuthenticated ) { %>
+    <p><a href="/add">Add</a> a weight measurement or <a href="/list">view</a> your progress.</p>
+  <% } %>
+</h3>
+
