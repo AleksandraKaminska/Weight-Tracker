@@ -14,7 +14,7 @@ const createServer = async config => {
 				failAction: ( request, h, err ) => {
 					throw err;
 				}
-			}
+      }
 		}
 	} );
 

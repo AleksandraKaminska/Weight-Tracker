@@ -1,0 +1,119 @@
+<div id="app">
+	<h1 class="title">Water Measurements</h1>
+	<div class="section" v-if="errorMessage">
+		<div class="notification is-danger" v-text="errorMessage"></div>
+	</div>
+  <div v-if="fetching" class="pageloader is-left-to-right"><span class="title">Pageloader</span></div>
+	<div v-if="hasData">
+    <column-chart :data="chartData" :min="0" :colors="['#209CEE']"></column-chart>
+    <br>
+    <br>
+    <br>
+		<table class="table is-striped is-narrow is-hoverable is-fullwidth">
+			<thead>
+				<tr>
+					<th>Date</th>
+					<th>Milliliters</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr v-for="m in measurements">
+					<td v-text="formatDate(m.measureDate)" class="is-vcentered"></td>
+					<td v-text="m.milliliters" class="is-vcentered"></td>
+					<td class="is-vcentered level-right">
+            <button class="button is-danger is-outlined" @click="remove(m)">
+              <span>Delete</span>
+              <span class="icon is-small">
+                <i class="fas fa-times"></i>
+              </span>
+            </button>
+          </td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div v-if="noData">No measurements to display</div>
+</div>
+
+<script>
+	Vue.use(Chartkick.use(Chart));
+	const app = new Vue({
+		el: "#app",
+		computed: {
+			noData: function () {
+				return this.measurements.length === 0;
+			},
+			hasData: function () {
+				return this.measurements.length > 0;
+			},
+			chartData: function () {
+				// maps the data returned from the API into a format the chart component understands
+        const data = {};
+        this.measurements.forEach(m => data[this.formatDate(m.measureDate)] = m.milliliters);
+				return data;
+			}
+		},
+		data() {
+			return {
+				measurements: [],
+				fetching: false,
+				errorMessage: ""
+			}
+		},
+		mounted() {
+			this.fetchMeasurements();
+		},
+		methods: {
+      formatDate: date => (
+        new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: '2-digit'}).format(new Date(date))
+      ),
+      groupByDate: array => {
+        let result = []
+        array.reduce((res, { id, measureDate, milliliters }) => {
+          if (!res[measureDate]) {
+            res[measureDate] = { id, measureDate, milliliters: 0 };
+            result.push(res[measureDate])
+          }
+          res[measureDate].milliliters += milliliters;
+          return res;
+        },
+        {})
+        return result
+      },
+			fetchMeasurements: async function () {
+				this.measurements = [];
+				this.fetching = true;
+				this.errorMessage = "";
+
+				const response = await fetch("/api/water-measurements", {
+					method: "GET",
+					credentials: "same-origin"
+				});
+
+				this.fetching = false;
+        const json = await response.json();
+
+				if (response.status === 200) {
+          this.measurements = this.groupByDate(json)
+				} else {
+					this.errorMessage = `There was an error. ${json.error} - ${json.message}`;
+				}
+			},
+			remove: async function (m) {
+				if (confirm(`Are you sure you want to delete ${m.measureDate} - ${m.milliliters}?`)) {
+					const response = await fetch(`/api/water-measurements/${m.id}`, {
+						method: "DELETE",
+						credentials: "same-origin"
+					});
+					if (response.status === 204) {
+						this.fetchMeasurements();
+					} else {
+						const json = await response.json();
+						this.errorMessage = `There was an error. ${json.error} - ${json.message}`;
+					}
+				}
+			}
+		}
+	});
+</script>

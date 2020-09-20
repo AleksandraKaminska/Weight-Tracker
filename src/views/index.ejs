@@ -1,13 +1,366 @@
-<h1 class="title">Weight Tracker</h1>
-<br>
-<h2 class="subtitle">Welcome to the <b>Weight Tracker</b> sample project!</h2>
-<h3 class="subtitle">
+<div id="app">
+  <div class="section" v-if="errorMessage">
+		<div class="notification is-danger" v-text="errorMessage"></div>
+	</div>
+  <div v-if="fetching" class="pageloader is-left-to-right"><span class="title">Pageloader</span></div>
+
   <% if ( auth.isAnonymous ) { %>
-    <p><a href="/login">Click here</a> to login or create an account.</p>
+    <h1 class="title has-text-left">Weight Tracker</h1>
+    <h2 class="subtitle">
+      <p><a href="/login">Click here</a> to login or create an account.</p>
+    </h2>
   <% } %>
 
   <% if ( auth.isAuthenticated ) { %>
-    <p><a href="/add">Add</a> a weight measurement or <a href="/list">view</a> your progress.</p>
-  <% } %>
-</h3>
+    <div class="columns is-vcentered">
+      <div class="column">
+        <h1 class="title has-text-left">Dashboard</h1>
+      </div>
+      <button-counter></button-counter>
+      <div class="column">
+        <p class="bd-notification has-text-right">{{ today }}</p>
+      </div>
+    </div>
 
+    <div class="tile is-ancestor">
+      <div class="tile is-parent">
+        <article class="tile is-child box has-background-success-light">
+          <p class="title has-text-primary-dark">Ongoing</p>
+          <div class="content columns">
+            <p class="column is-8 is-size-5" v-if="data.totalSteps < 10000">
+              Only <b>{{ 10000 - data.totalSteps }} steps</b> to reach your daily goal. Push yourself, excuses don't burn calories.
+            </p>
+            <p class="column is-8 is-size-5" v-if="data.totalSteps >= 10000">
+              Congratulations 🎉
+              <br>
+              You have reached your daily steps goal!
+            </p>
+            <i class="fas fa-walking fa-9x has-text-primary-dark column is-vcentered"></i>
+          </div>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box has-background-link-light">
+          <p class="title has-text-link">Don't forget to stay hydrated</p>
+          <div class="content columns">
+            <p class="column is-8 is-size-7">
+              We lose water and electrolytes a multitude of ways during physical activity. Not being properly hydrated before, during and after physical activity can lead not only to decreases in performance, but also increased risks for heat-related illnesses.
+            </p>
+            <i class="fas fa-tint fa-9x has-text-link-dark column is-vcentered"></i>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div class="tile is-ancestor">
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <a aria-label="edit" href="/add-measurement">
+            <p class="title">Weight
+              <i class="fas fa-plus is-size-5 ml-1 mb-1 has-text-success-dark" aria-hidden="true"></i>
+            </p>
+          </a>
+          <div v-if="data.weight" class="content columns">
+            <p class="column subtitle mt-5">
+              <span class="is-size-1 has-text-weight-bold" v-bind:class="{ 'has-text-primary-dark': data.weight, 'has-text-grey-light': !data.weight }">
+                {{ data.weight }} kg
+              </span>
+            </p>
+            <i class="column fas fa-weight has-text-grey-lighter fa-6x"></i>
+          </div>
+          <a v-if="!data.weight" class="subtitle is-block mt-4 has-text-primary-dark" href="/add-measurement">
+            Let's add your measurements
+          </a>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <a aria-label="edit" href="/add-sleep">
+            <p class="title">Sleep Duration
+              <i class="fas fa-plus is-size-5 ml-1 mb-1 has-text-success-dark" aria-hidden="true"></i>
+            </p>
+          </a>
+          <p class="subtitle mt-5">
+            <span class="is-size-1 has-text-weight-bold" v-bind:class="{ 'has-text-primary-dark': data.totalSleep, 'has-text-grey-light': !data.totalSleep }">
+              {{ formatTime }}
+            </span>
+          </p>
+        </article>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <p class="title">Body Mass Index (BMI)</p>
+          <a v-if="!data.height" class="subtitle is-block mb-1 mt-1 has-text-primary-dark" href="/add-height">
+            Let's add your height
+          </a>
+          <div v-if="data.height" class="level">
+            <div class="media-left">
+              <div class="is-size-1 has-text-weight-bold has-text-primary-dark">
+                {{ getBMI }}
+              </div>
+            </div>
+            <div class="media-content">
+              <div class="content">
+                <strong class="is-size-3 has-text-grey-dark ml-5">{{ getBMICategory }}</strong>
+              </div>
+            </div>
+            <div class="media-right" v-if="data.height">
+              <a aria-label="edit" href="/add-height">
+                <i class="fas fa-edit has-text-success-dark" aria-hidden="true"></i>
+              </a>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div class="tile is-ancestor">
+      <div class="tile is-vertical is-8">
+        <div class="tile">
+          <div class="tile is-parent">
+            <article class="tile is-child">
+              <p class="title">News</p>
+              <a class="twitter-timeline" data-lang="en" data-height="375" href="https://twitter.com/healthmagazine?ref_src=twsrc%5Etfw">Tweets by healthmagazine</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+            </article>
+          </div>
+          <div class="tile is-parent is-vertical">
+            <article class="tile is-child box">
+              <a aria-label="edit" href="/add-water">
+                <p class="title">Water
+                  <i class="fas fa-plus is-size-5 ml-1 mb-1 has-text-success-dark" aria-hidden="true"></i>
+                </p>
+              </a>
+              <p class="subtitle mt-5">
+                <span class="is-size-1 has-text-weight-bold" v-bind:class="{ 'has-text-primary-dark': data.totalWater, 'has-text-grey-light': !data.totalWater }">
+                  {{ formatLiters }}
+                </span>
+              </p>
+            </article>
+            <article class="tile is-child box">
+              <a aria-label="edit" href="/add-steps">
+                <p class="title">Steps
+                  <i class="fas fa-plus is-size-5 ml-1 mb-1 has-text-success-dark" aria-hidden="true"></i>
+                </p>
+              </a>
+              <div class="content columns">
+                <p class="column subtitle mt-5">
+                  <span class="is-size-1 has-text-weight-bold" v-bind:class="{ 'has-text-primary-dark': data.totalSteps, 'has-text-grey-light': !data.totalSteps }">
+                    {{ data.totalSteps }}
+                  </span>
+                </p>
+                <i class="column fas fa-shoe-prints has-text-grey-lighter fa-6x"></i>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+      <div class="tile is-parent">
+        <article class="tile is-child box">
+          <div class="content">
+            <div class="columns">
+              <p class="title column">
+                Daily Plan
+              </p>
+              <i class="column fas fa-dumbbell has-text-grey-lighter mr-0 fa-5x is-vcentered"></i>
+            </div>
+            <div class="content">
+              <table class="table is-size-5 is-hoverable is-fullwidth">
+                <tbody>
+                  <tr>
+                    <th>2 liters</th>
+                    <td>Water</td>
+                    <td>
+                      <pie-chart width="30px" height="30px" :donut="true" :legend="false" :colors="['hsl(204, 86%, 53%)', 'hsl(0, 0%, 86%)']" :data="[['drank', data.totalWater], ['not-drank', 2000 - data.totalWater]]"></pie-chart>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>10 000</th>
+                    <td>Steps</td>
+                    <td>
+                      <pie-chart width="30px" height="30px" :donut="true" :legend="false" :colors="['hsl(48, 100%, 67%)', 'hsl(0, 0%, 86%)']" :data="[['drank', data.totalSteps], ['not-drank', 10000 - data.totalSteps]]"></pie-chart>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>8 h</th>
+                    <td>Sleep</td>
+                    <td>
+                      <pie-chart width="30px" height="30px" :donut="true" :legend="false" :colors="['hsl(217, 71%, 53%)', 'hsl(0, 0%, 86%)']" :data="[['drank', data.totalSleep], ['not-drank', 480 - data.totalSleep]]"></pie-chart>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<script>
+  Vue.use(Chartkick.use(Chart));
+
+  const app = new Vue({
+    el: "#app",
+		computed: {
+      waterChartData: function () {
+				return this.data.totalWater
+			},
+      today: function () {
+        return new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: '2-digit'}).format(new Date())
+      },
+      getBMI: function() {
+        if (this.data.weight && this.data.height) {
+          return (this.data.weight / (this.data.height**2)).toFixed(1);
+        }
+      },
+      getBMICategory: function() {
+        if (this.data.weight && this.data.height) {
+          const bmi = this.data.weight / (this.data.height**2);
+
+          if (bmi < 18.5) {
+            return "Underweight";
+          } else if (bmi < 25){
+            return "Normal";
+          } else if (bmi < 30){
+            return "Overweight";
+          } else {
+            return "Obese"
+          }
+        }
+      },
+      formatTime: function() {
+        let m = this.data.totalSleep;
+        const h = Math.floor(m / 60);
+        m -= h * 60;
+        return h > 0 ? `${h} h ${m} min` : `${m} min`
+      },
+      formatLiters: function() {
+        return this.data.totalWater > 1000 ? this.data.totalWater / 1000 + ' l' : this.data.totalWater + ' ml'
+      }
+		},
+		data() {
+			return {
+        data: {
+          weight: null,
+          height: null,
+          totalSleep: 0,
+          totalSteps: 0,
+          totalWater: 0
+        },
+				fetching: false,
+				errorMessage: ""
+			}
+		},
+		mounted() {
+      this.fetchWeight()
+      this.fetchHeight()
+      this.fetchWater()
+      this.fetchSteps()
+      this.fetchSleep()
+		},
+		methods: {
+			fetchWeight: async function () {
+				this.data.weight = null;
+				this.fetching = true;
+				this.errorMessage = "";
+
+				const response = await fetch("/api/measurements/last", {
+					method: "GET",
+					credentials: "same-origin"
+				});
+
+				this.fetching = false;
+        const json = await response.json();
+
+				if (response.status === 200) {
+          this.data.weight = json.length > 0 && json[0].weight
+				} else {
+					this.errorMessage = `There was an error. ${json.error} - ${json.message}`;
+				}
+      },
+      fetchHeight: async function () {
+				this.data.height = null;
+				this.fetching = true;
+				this.errorMessage = "";
+
+				const response = await fetch("/api/heights/last", {
+					method: "GET",
+					credentials: "same-origin"
+				});
+
+				this.fetching = false;
+        const json = await response.json();
+
+				if (response.status === 200) {
+          this.data.height = json.length > 0 && json[0].height
+				} else {
+					this.errorMessage = `There was an error. ${json.error} - ${json.message}`;
+        }
+      },
+      fetchSleep: async function () {
+				this.data.totalSleep = 0;
+				this.fetching = true;
+				this.errorMessage = "";
+
+				const response = await fetch("/api/sleep-measurements/today", {
+					method: "GET",
+					credentials: "same-origin"
+				});
+
+				this.fetching = false;
+        const json = await response.json();
+
+				if (response.status === 200) {
+          if (json.length && json[0] && json[0].total_minutes) {
+            this.data.totalSleep = json[0].total_minutes
+          }
+				} else {
+					this.errorMessage = `There was an error. ${json.error} - ${json.message}`;
+        }
+      },
+      fetchWater: async function () {
+				this.data.totalWater = 0;
+				this.fetching = true;
+				this.errorMessage = "";
+
+				const response = await fetch("/api/water-measurements/today", {
+					method: "GET",
+					credentials: "same-origin"
+				});
+
+				this.fetching = false;
+        const json = await response.json();
+
+				if (response.status === 200) {
+          if (json.length && json[0] && json[0].total_milliliters) {
+            this.data.totalWater = json[0].total_milliliters
+          }
+				} else {
+					this.errorMessage = `There was an error. ${json.error} - ${json.message}`;
+        }
+      },
+      fetchSteps: async function () {
+				this.data.totalSteps = 0;
+				this.fetching = true;
+				this.errorMessage = "";
+
+				const response = await fetch("/api/steps/today", {
+					method: "GET",
+					credentials: "same-origin"
+				});
+
+				this.fetching = false;
+        const json = await response.json();
+
+				if (response.status === 200) {
+          if (json.length && json[0] && json[0].total_steps) {
+            this.data.totalSteps = json[0].total_steps
+          }
+				} else {
+					this.errorMessage = `There was an error. ${json.error} - ${json.message}`;
+        }
+      }
+		}
+	});
+</script>

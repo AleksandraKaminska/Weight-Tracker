@@ -1,9 +1,13 @@
 "use strict";
 
 const path = require( "path" );
-const api = require( "./api" );
 const auth = require( "./auth" );
 const measurements = require( "./measurements" );
+const apiWeight = require( "./api/weight" );
+const apiHeight = require( "./api/height" );
+const apiWater = require( "./api/water" );
+const apiSteps = require( "./api/steps" );
+const apiSleep = require( "./api/sleep" );
 
 const home = {
 	method: "GET",
@@ -22,7 +26,7 @@ const staticAssets = {
 	method: "GET",
 	path: "/assets/{param*}",
 	handler: {
-		directory:{ 
+		directory:{
 			path: path.join( __dirname, "..", "assets" )
 		}
 	},
@@ -32,14 +36,12 @@ const staticAssets = {
 const error404 = {
 	method: "*",
 	path: "/{any*}",
-	handler: function ( request, h ) {
-		return h.view( "404", { title: "Not Found" } ).code( 404 );
-	},
+	handler: ( request, h ) => h.view( "404", { title: "Not Found" } ).code( 404 ),
 	options: { auth: false }
 };
 
 module.exports = [
 	home,
 	staticAssets,
-	error404
-].concat( api, auth, measurements );
+  error404
+].concat( auth, measurements, apiWeight, apiHeight, apiWater, apiSteps, apiSleep );

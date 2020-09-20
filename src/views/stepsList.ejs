@@ -1,13 +1,11 @@
-<script src="https://unpkg.com/chart.js@2.8.0/dist/Chart.bundle.js"></script>
-<script src="https://unpkg.com/vue-chartkick@0.5.1"></script>
 <div id="app">
-	<h1 class="title">Measurements</h1>
+	<h1 class="title">Steps</h1>
 	<div class="section" v-if="errorMessage">
 		<div class="notification is-danger" v-text="errorMessage"></div>
 	</div>
-	<div v-if="fetching">Getting your measurements...</div>
+  <div v-if="fetching" class="pageloader is-left-to-right"><span class="title">Pageloader</span></div>
 	<div v-if="hasData">
-    <line-chart :data="chartData" :min="chartMinimum" :colors="['#00D1B2']"></line-chart>
+    <column-chart :data="chartData" :min="0" :colors="['hsl(204, 71%, 39%)']"></column-chart>
     <br>
     <br>
     <br>
@@ -15,14 +13,14 @@
 			<thead>
 				<tr>
 					<th>Date</th>
-					<th>Weight</th>
+					<th>Steps</th>
 					<th></th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr v-for="m in measurements">
-					<td v-text="m.measureDate" class="is-vcentered"></td>
-					<td v-text="m.weight" class="is-vcentered"></td>
+					<td v-text="formatDate(m.end_at)" class="is-vcentered"></td>
+					<td v-text="m.steps" class="is-vcentered"></td>
 					<td class="is-vcentered level-right">
             <button class="button is-danger is-outlined" @click="remove(m)">
               <span>Delete</span>
@@ -51,15 +49,9 @@
 			},
 			chartData: function () {
 				// maps the data returned from the API into a format the chart component understands
-				const data = {};
-        this.measurements.forEach(m => data[m.measureDate] = m.weight);
+        const data = {};
+        this.measurements.forEach(m => data[this.formatDate(m.end_at)] = m.steps);
 				return data;
-			},
-			chartMinimum: function () {
-				// Min value is the lowest measurement down to the nearest multiple of 10
-				return Math.floor(this.measurements.reduce((prev, current) => {
-					return prev.weight < current.weight ? prev.weight : current.weight;
-				}, 0) / 10) * 10;
 			}
 		},
 		data() {
@@ -73,12 +65,28 @@
 			this.fetchMeasurements();
 		},
 		methods: {
+      formatDate: date => (
+        new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: '2-digit'}).format(new Date(date))
+      ),
+      groupByDate: array => {
+        let result = []
+        array.reduce((res, { id, end_at, steps }) => {
+          if (!res[end_at]) {
+            res[end_at] = { id, end_at, steps: 0 };
+            result.push(res[end_at])
+          }
+          res[end_at].steps += steps;
+          return res;
+        },
+        {})
+        return result
+      },
 			fetchMeasurements: async function () {
 				this.measurements = [];
 				this.fetching = true;
 				this.errorMessage = "";
 
-				const response = await fetch("/api/measurements", {
+				const response = await fetch("/api/steps", {
 					method: "GET",
 					credentials: "same-origin"
 				});
@@ -87,24 +95,14 @@
         const json = await response.json();
 
 				if (response.status === 200) {
-					const now = new Date();
-					const offset = now.getTimezoneOffset();
-					this.measurements = json.map(m => {
-						const dt = new Date(m.measureDate);
-						const dt2 = new Date(dt.getTime() + (offset * 60 * 1000));
-						return {
-							id: m.id,
-							measureDate: dt2.toLocaleDateString(undefined, "short"),
-							weight: m.weight
-						}
-					});
+          this.measurements = this.groupByDate(json)
 				} else {
 					this.errorMessage = `There was an error. ${json.error} - ${json.message}`;
 				}
 			},
 			remove: async function (m) {
-				if (confirm(`Are you sure you want to delete ${m.measureDate} - ${m.weight}?`)) {
-					const response = await fetch(`/api/measurements/${m.id}`, {
+				if (confirm(`Are you sure you want to delete ${m.end_at} - ${m.steps}?`)) {
+					const response = await fetch(`/api/steps/${m.id}`, {
 						method: "DELETE",
 						credentials: "same-origin"
 					});

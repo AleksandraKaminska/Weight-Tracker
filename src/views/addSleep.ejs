@@ -1,0 +1,94 @@
+<div id="app">
+  <h1 class="title">Add Sleep</h1>
+
+  <div class="columns">
+    <div class="column"></div>
+    <div class="column is-one-third">
+      <div class="box">
+        <article class="media">
+          <div class="media-content">
+            <div class="content">
+              <form @submit.prevent="addSleep">
+                <fieldset :disabled="disabled">
+                  <div class="field">
+                    <label class="label">Start At</label>
+                    <div class="control">
+                      <date-picker v-model.trim="start_at" lang="en" type="datetime" format="YYYY-MM-DD HH:mm" value-type="YYYY-MM-DD HH:mm"></date-picker>
+                    </div>
+                  </div>
+
+                  <div class="field">
+                    <label class="label">End At</label>
+                    <div class="control">
+                      <date-picker v-model.trim="end_at" lang="en" type="datetime" format="YYYY-MM-DD HH:mm" value-type="YYYY-MM-DD HH:mm"></date-picker>
+                    </div>
+                  </div>
+
+                  <div class="field is-grouped">
+                    <div class="control">
+                      <input type="submit" class="button is-primary" value="Submit">
+                    </div>
+                  </div>
+                </fieldset>
+              </form>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div class="column"></div>
+  </div>
+	<div class="section">
+		<div v-if="message" class="notification is-success" v-text="message"></div>
+		<div v-if="errorMessage" class="notification is-danger" v-text="errorMessage"></div>
+	</div>
+</div>
+
+<script>
+	const app = new Vue({
+		el: "#app",
+		data() {
+			return {
+        start_at: null,
+        end_at: null,
+				minutes: undefined,
+				disabled: false,
+				message: "",
+				errorMessage: ""
+			}
+		},
+		methods: {
+			addSleep: async function (e) {
+				// disable form while submitting to API
+				this.disabled = true;
+				this.message = "";
+        this.errorMessage = "";
+
+        const diff = new Date(this.end_at) - new Date(this.start_at);
+        console.log(this.start_at, new Date(this.end_at), diff)
+				const response = await fetch("/api/sleep-measurements", {
+					method: "POST",
+					credentials: "same-origin",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({
+            start_at: this.start_at,
+						end_at: this.end_at,
+						minutes: Math.floor(diff / 1000 / 60)
+					})
+				});
+				if (response.status === 200) {
+					this.minutes = undefined;
+					this.message = "Weight measurement added!";
+					// clear message after 2 seconds
+					setTimeout(() => this.message = "", 2000);
+				} else {
+					const json = await response.json();
+					this.errorMessage = `There was an error. ${json.error} - ${json.message}`;
+				}
+				this.disabled = false;
+			},
+		}
+	});
+</script>

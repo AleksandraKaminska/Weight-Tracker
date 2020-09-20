@@ -1,6 +1,6 @@
 .navbar-logo {
-	font-weight: bold;
-	font-size: 1.2em;
+	font-weight: 600;
+	font-size: 1.3em;
 }
 
 @import url('https://fonts.googleapis.com/css?family=Montserrat:400,600,700');
@@ -94,7 +94,7 @@
     transform: rotateX(0);
   }
 }
-    
+
 
 
 
@@ -116,4 +116,13 @@ html, button, input, select, textarea {
 h1 {
   text-align: center;
   margin: 30px 15px;
+}
+
+
+.object-fit-cover {
+  object-fit: cover;
+}
+
+body > .section {
+  min-height: calc(100vh - 168px - 56px);
 }

@@ -178,10 +178,41 @@ const updateMeasurementForCurrentUserById = {
 	}
 };
 
+// get last measurement for the current user
+const lastMeasurementForCurrentUser = {
+	method: "GET",
+	path: "/api/measurements/last",
+	handler: async ( request, h ) => {
+		try {
+			if ( !request.auth.isAuthenticated ) {
+				return boom.unauthorized();
+			}
+			const userId = request.auth.credentials.profile.id;
+			const measurement = await h.sql`SELECT
+					id
+					, measure_date AS "measureDate"
+					, weight
+				FROM  measurements
+				WHERE user_id = ${ userId }
+				ORDER BY
+          measure_date DESC
+        LIMIT 1`;
+			return measurement;
+		} catch ( err ) {
+			console.log( err );
+			return boom.serverUnavailable();
+		}
+	},
+	options: {
+		auth: { mode: "try" }
+	}
+};
+
 module.exports = [
-	addMeasurementForCurrentUser,
+  addMeasurementForCurrentUser,
 	allMeasurementsForCurrentUser,
 	deleteMeasurementForCurrentUserById,
 	getMeasurementForCurrentUserById,
-	updateMeasurementForCurrentUserById
+  updateMeasurementForCurrentUserById,
+  lastMeasurementForCurrentUser,
 ];
