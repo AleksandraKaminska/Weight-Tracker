@@ -1,6 +1,6 @@
 # Weight Tracker
 
-![Demo](docs/build-weight-tracker-app-demo.gif)
+![Demo](docs/Hnet-image.gif)
 
 ## App: https://node-weight-tracker.herokuapp.com/
 
