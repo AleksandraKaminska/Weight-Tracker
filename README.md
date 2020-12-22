@@ -2,6 +2,8 @@
 
 ![Demo](docs/build-weight-tracker-app-demo.gif)
 
+## App: https://node-weight-tracker.herokuapp.com/
+
 This sample application demonstrates the following technologies.
 
 * [hapi](https://hapi.dev) - a wonderful Node.js application framework
